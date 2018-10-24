@@ -167,6 +167,58 @@ function workspace_update_field_storage_definitions($entity_type_id, array $colu
 }
 
 /**
+ * Updates definitions of single choice field to multiple choice.
+ *
+ * @param string $entity_type_id
+ *   The type of entity.
+ * @param string[] $columns
+ *   The list of column names.
+ *
+ * @throws \Exception
+ */
+function workspace_update_field_to_multiple($entity_type_id, array $columns) {
+  $database = \Drupal::database();
+
+  foreach ($columns as $column) {
+    // Retrieve existing field data.
+    $fieldData = $database->select($entity_type_id, 'ws')
+      ->fields('ws', ['id', $column])
+      ->condition($column, '', '!=')
+      ->execute()
+      ->fetchAllKeyed();
+
+
+    // Remove data from the storage.
+    $database->update($entity_type_id)
+      ->fields([$column => NULL])
+      ->execute();
+
+    $manager = \Drupal::entityDefinitionUpdateManager();
+    $storage_definition = $manager->getFieldStorageDefinition($column, $entity_type_id);
+    $storage_definition->setCardinality(-1);
+    $manager->updateFieldStorageDefinition($storage_definition);
+
+    // Restore entity data in the new schema.
+    $insert_query = $database->insert('workspace__' . $column)
+      ->fields(['bundle',
+        'deleted',
+        'entity_id',
+        'revision_id',
+        'langcode',
+        'delta',
+        $column . '_target_id'
+      ]);
+    foreach ($fieldData as $id => $fieldValue) {
+      $insert_query->values(['workspace', 0, $id, $id, 'en', 0, $fieldValue]);
+    }
+    $insert_query->execute();
+  }
+
+}
+
+
+
+/**
  * Update workspace pointer name field again.
  */
 function workspace_update_8106() {
@@ -178,4 +230,11 @@ function workspace_update_8106() {
  */
 function workspace_update_8107() {
   workspace_update_field_storage_definitions('replication', ['replication_status', 'name'], ['replication']);
+}
+
+/**
+ * Make sure replication settings are multiple choice fields.
+ */
+function workspace_update_8109() {
+  workspace_update_field_to_multiple('workspace', ['pull_replication_settings', 'push_replication_settings']);
 }

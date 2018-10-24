@@ -173,19 +173,21 @@ class EntityTypeInfo {
       ->setLabel(t('Replication settings on update'))
       ->setDescription(t('The settings to use when content is pulled from upstream.'))
       ->setRevisionable(TRUE)
+      ->setCardinality(-1)
       ->setSetting('target_type', 'replication_settings')
       ->setDisplayOptions('form', [
-        'type' => 'options_filters_select',
-        'weight' => 6
+        'type' => 'options_buttons',
+        'weight' => 6,
       ]);
 
     $fields['push_replication_settings'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Replication settings on deploy'))
       ->setDescription(t('The settings to use when content is pushed to upstream.'))
       ->setRevisionable(TRUE)
+      ->setCardinality(-1)
       ->setSetting('target_type', 'replication_settings')
       ->setDisplayOptions('form', [
-        'type' => 'options_filters_select',
+        'type' => 'options_buttons',
         'weight' => 7
       ]);
 

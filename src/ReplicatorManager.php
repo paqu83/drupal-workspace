@@ -163,7 +163,13 @@ class ReplicatorManager implements ReplicatorInterface {
     $referenced_entities = $items->referencedEntities();
     if (count($referenced_entities) > 0) {
       $task->setFilter($referenced_entities[0]->getFilterId());
-      $task->setParameters($referenced_entities[0]->getParameters());
+      $parameters = [];
+      foreach ($referenced_entities as $referenced_entity) {
+        if ($referenced_entities[0]->getFilterId() == $referenced_entity->getFilterId()) {
+          $parameters['types'][] = $referenced_entity->getParameters()['types'][0];
+        }
+      }
+      $task->setParameters($parameters);
     }
 
     return $task;
